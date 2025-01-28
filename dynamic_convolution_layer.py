@@ -3,7 +3,7 @@ from tensorflow.keras.layers import Layer
 from basic_convolution_processor import  BasiConvolutionProcessor
 from input_separation_layer import InputSeparationLayer
 from input_driven_convolution_decider import InputDrivenConvolutionDecider
-from combined_output import CombinedOutputLayer
+from combined_output_layer import CombinedOutputLayer
 
 # classes_config: The number of subclasses of every class label ("class label":"number of subclasses")
 # {
@@ -59,8 +59,7 @@ class DynamiConvolutionLayer(Layer):
         #Input Driven Convolution Decider Layer for DCN:
         self.input_driven_conv_layer_decider=InputDrivenConvolutionDecider(
             classes_config=self.classes_config,
-            max_output_cells=self.max_output_cells,
-            batch_size=self.batch_size
+            max_output_cells=self.max_output_cells
         )
 
         #Combined Output Layer for DCN:

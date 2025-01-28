@@ -7,21 +7,27 @@ class InputSeparationLayer(Layer):
         super().__init__(**kwargs)
         self.classes_config=classes_config
         
-    @tf.function 
+    def collect_indices_by_class(self,ind):
+        return tf.reshape(ind,[-1])
+
+    def handle_absence_of_class_indices(self):
+        return tf.constant([],tf.int64)
+    
+    
     def call(self,predictions):
         pred=tf.argmax(predictions,axis=1)
         pred=tf.cast(pred,tf.int32)
-        pred=predictions
         input_config={}
         
         for cls in self.classes_config.keys():
             ind=tf.where(pred==cls)
             
-            if tf.size(ind)==0:
-                input_config[cls]=tf.constant([],dtype=tf.int64)
-                
-            else:
-                input_config[cls]=tf.reshape(ind,-1)
+            input_config[cls]=tf.cond(
+                pred=tf.size(ind)>0,
+                true_fn=lambda : self.collect_indices_by_class(ind),
+                false_fn=self.handle_absence_of_class_indices
+            )
+
                 
         return input_config
         

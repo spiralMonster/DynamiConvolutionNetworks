@@ -13,12 +13,15 @@ class CombinedOutputLayer(Layer):
         for ind in input_config.values():
             new_ind=tf.concat([new_ind,ind],axis=0)
             
-        out=tf.zeros((self.batch_size,self.max_output_cells),dtype=tf.float32)
+        out=self.batch_size*[0]
         
         for ind1,ind2 in enumerate(new_ind):
-            out[ind2]=inputs[ind1]
+            out[ind2]=tf.expand_dims(inputs[ind1],axis=0)
             
-        final_out=tf.cast(out,dtype=tf.float32)
+        final_out=out[0]
+        for tensor in out[1:]:
+            final_out=tf.concat([final_out,tensor],axis=0)
+            
         return final_out
         
     def get_config(self):

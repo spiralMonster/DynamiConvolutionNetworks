@@ -1,5 +1,6 @@
 import tensorflow as tf
 from tensorflow.keras.layers import Dense,Conv2D,Flatten,BatchNormalization,Input,MaxPooling2D,Dropout
+from tensorflow.keras.layers import Reshape,ZeroPadding1D
 from tensorflow.keras.layers import Layer
 from tensorflow.keras.models import Model
 from inception_layer import InceptionLayer
@@ -7,11 +8,10 @@ from skip_connection_layer import SkipConnectionLayer
 
 class Hybrid_Inception_SkipConnection_Layer(Layer):
     
-    def __init__(self,num_output_layer_cells,max_output_cells,batch_size,**kwargs):
+    def __init__(self,num_output_layer_cells,max_output_cells,**kwargs):
         super().__init__(**kwargs)
         self.num_output_layer_cells=num_output_layer_cells
         self.max_output_cells=max_output_cells
-        self.batch_size=batch_size
         self.padding_length=self.max_output_cells-self.num_output_layer_cells
         
         #Inception Layers:
@@ -35,9 +35,20 @@ class Hybrid_Inception_SkipConnection_Layer(Layer):
         self.batch1=BatchNormalization()
         self.batch2=BatchNormalization()
         self.batch3=BatchNormalization()
+    
+    def handle_padding(self,x):
+        x=Reshape((self.num_output_layer_cells,1))(x)
+        padded_x=ZeroPadding1D(padding=(0,self.padding_length))(x)
+        final_x=Reshape((self.max_output_cells,))(padded_x)
+        return final_x
+    
+    def handle_non_padding(self,x):
+            return x
+    
+        
+    
         
     def call(self,input):
-               
         x=self.incept1(input)
         x=MaxPooling2D((2,2),padding='same')(x)
         x=self.skip1(x)
@@ -64,19 +75,21 @@ class Hybrid_Inception_SkipConnection_Layer(Layer):
         x=Dropout(0.2)(x)
         x=self.dense4(x)
         x=self.dense5(x)
-
-        if self.padding_length>0:
-            padding=tf.zeros((self.batch_size,self.padding_length),dtype=tf.float32)
-            x=tf.concat([x,padding])
         
-        return x
+        
+        y=tf.cond(
+            tf.convert_to_tensor(self.padding_length>0),
+            true_fn=lambda : self.handle_padding(x),
+            false_fn= lambda :self. handle_non_padding(x)
+        )
+        
+        return y
         
     def get_config(self):
         config=super().get_config()
         config.update({
             'num_output_layer_cells':self.num_output_layer_cells,
-            'max_output_cells':self.max_output_cells,
-            'batch_size':self.batch_size
+            'max_output_cells':self.max_output_cells
         })
         return config
         

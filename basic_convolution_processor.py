@@ -7,6 +7,7 @@ from tensorflow.keras.layers import Conv2D,MaxPooling2D,Dense,Flatten
 #     {
 #         'filters':,
 #         'kernel_size':,
+#         'padding':,
 #         'activation':,
 #         'kernel_initializer':
 #     },
@@ -55,6 +56,7 @@ class BasiConvolutionProcessor(Layer):
                 Conv2D(
                     filters=config["filters"],
                     kernel_size=config["kernel_size"],
+                    padding=config["padding"],
                     activation=config["activation"],
                     kernel_initializer=config["kernel_initializer"]
                 )
